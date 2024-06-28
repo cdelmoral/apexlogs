@@ -1,0 +1,179 @@
+{
+  "size": 10,
+  "totalSize": 10,
+  "done": true,
+  "queryLocator": null,
+  "entityTypeName": "ApexLog",
+  "records": [
+    {
+      "attributes": {
+        "type": "ApexLog",
+        "url": "/services/data/v57.0/tooling/sobjects/ApexLog/07L0500000G0f5pEAB"
+      },
+      "Id": "07L0500000G0f5pEAB",
+      "Application": "Browser",
+      "Location": "SystemLog",
+      "LogUserId": "00505000005qkMQAAY",
+      "Operation": "/aura",
+      "Request": "Application",
+      "RequestIdentifier": "TID:351578900009cd4b3f",
+      "StartTime": "2024-06-15T22:50:17.000+0000",
+      "Status": "Success",
+      "DurationMilliseconds": 97,
+      "LogLength": 1039
+    },
+    {
+      "attributes": {
+        "type": "ApexLog",
+        "url": "/services/data/v57.0/tooling/sobjects/ApexLog/07L0500000G0f5qEAB"
+      },
+      "Id": "07L0500000G0f5qEAB",
+      "Application": "Browser",
+      "Location": "SystemLog",
+      "LogUserId": "00505000005qkMQAAY",
+      "Operation": "/aura",
+      "Request": "Application",
+      "RequestIdentifier": "TID:51012690000d728558",
+      "StartTime": "2024-06-15T22:50:33.000+0000",
+      "Status": "Success",
+      "DurationMilliseconds": 64,
+      "LogLength": 1034
+    },
+    {
+      "attributes": {
+        "type": "ApexLog",
+        "url": "/services/data/v57.0/tooling/sobjects/ApexLog/07L0500000G0f5rEAB"
+      },
+      "Id": "07L0500000G0f5rEAB",
+      "Application": "Browser",
+      "Location": "SystemLog",
+      "LogUserId": "00505000005qkMQAAY",
+      "Operation": "/aura",
+      "Request": "Application",
+      "RequestIdentifier": "TID:6786169000088ff172",
+      "StartTime": "2024-06-15T22:50:49.000+0000",
+      "Status": "Success",
+      "DurationMilliseconds": 177,
+      "LogLength": 1692
+    },
+    {
+      "attributes": {
+        "type": "ApexLog",
+        "url": "/services/data/v57.0/tooling/sobjects/ApexLog/07L0500000G0f5uEAB"
+      },
+      "Id": "07L0500000G0f5uEAB",
+      "Application": "Browser",
+      "Location": "SystemLog",
+      "LogUserId": "00505000005qkMQAAY",
+      "Operation": "/aura",
+      "Request": "Application",
+      "RequestIdentifier": "TID:3791400000081df5ed",
+      "StartTime": "2024-06-15T22:50:20.000+0000",
+      "Status": "Success",
+      "DurationMilliseconds": 87,
+      "LogLength": 1034
+    },
+    {
+      "attributes": {
+        "type": "ApexLog",
+        "url": "/services/data/v57.0/tooling/sobjects/ApexLog/07L0500000G0f5vEAB"
+      },
+      "Id": "07L0500000G0f5vEAB",
+      "Application": "Browser",
+      "Location": "SystemLog",
+      "LogUserId": "00505000005qkMQAAY",
+      "Operation": "/aura",
+      "Request": "Application",
+      "RequestIdentifier": "TID:40391190000f01bd37",
+      "StartTime": "2024-06-15T22:50:22.000+0000",
+      "Status": "Success",
+      "DurationMilliseconds": 56,
+      "LogLength": 1034
+    },
+    {
+      "attributes": {
+        "type": "ApexLog",
+        "url": "/services/data/v57.0/tooling/sobjects/ApexLog/07L0500000G0f5zEAB"
+      },
+      "Id": "07L0500000G0f5zEAB",
+      "Application": "Browser",
+      "Location": "SystemLog",
+      "LogUserId": "00505000005qkMQAAY",
+      "Operation": "/aura",
+      "Request": "Application",
+      "RequestIdentifier": "TID:41006000000106a561",
+      "StartTime": "2024-06-15T22:50:22.000+0000",
+      "Status": "Success",
+      "DurationMilliseconds": 116,
+      "LogLength": 1034
+    },
+    {
+      "attributes": {
+        "type": "ApexLog",
+        "url": "/services/data/v57.0/tooling/sobjects/ApexLog/07L0500000G0f60EAB"
+      },
+      "Id": "07L0500000G0f60EAB",
+      "Application": "Browser",
+      "Location": "SystemLog",
+      "LogUserId": "00505000005qkMQAAY",
+      "Operation": "/aura",
+      "Request": "Application",
+      "RequestIdentifier": "TID:54446890000d7ea81c",
+      "StartTime": "2024-06-15T22:50:36.000+0000",
+      "Status": "Success",
+      "DurationMilliseconds": 58,
+      "LogLength": 1034
+    },
+    {
+      "attributes": {
+        "type": "ApexLog",
+        "url": "/services/data/v57.0/tooling/sobjects/ApexLog/07L0500000G0f61EAB"
+      },
+      "Id": "07L0500000G0f61EAB",
+      "Application": "Browser",
+      "Location": "SystemLog",
+      "LogUserId": "00505000005qkMQAAY",
+      "Operation": "/aura",
+      "Request": "Application",
+      "RequestIdentifier": "TID:6010109000085f4482",
+      "StartTime": "2024-06-15T22:50:42.000+0000",
+      "Status": "Success",
+      "DurationMilliseconds": 49,
+      "LogLength": 1034
+    },
+    {
+      "attributes": {
+        "type": "ApexLog",
+        "url": "/services/data/v57.0/tooling/sobjects/ApexLog/07L0500000G0f64EAB"
+      },
+      "Id": "07L0500000G0f64EAB",
+      "Application": "Browser",
+      "Location": "SystemLog",
+      "LogUserId": "00505000005qkMQAAY",
+      "Operation": "/aura",
+      "Request": "Application",
+      "RequestIdentifier": "TID:4141219000005cf464",
+      "StartTime": "2024-06-15T22:50:23.000+0000",
+      "Status": "Success",
+      "DurationMilliseconds": 92,
+      "LogLength": 1034
+    },
+    {
+      "attributes": {
+        "type": "ApexLog",
+        "url": "/services/data/v57.0/tooling/sobjects/ApexLog/07L0500000G0f65EAB"
+      },
+      "Id": "07L0500000G0f65EAB",
+      "Application": "Browser",
+      "Location": "SystemLog",
+      "LogUserId": "00505000005qkMQAAY",
+      "Operation": "/aura",
+      "Request": "Application",
+      "RequestIdentifier": "TID:70147690000a0f8fec",
+      "StartTime": "2024-06-15T22:50:51.000+0000",
+      "Status": "Success",
+      "DurationMilliseconds": 54,
+      "LogLength": 1040
+    }
+  ]
+}
