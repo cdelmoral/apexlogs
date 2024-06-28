@@ -148,15 +148,9 @@ func PatchSObject(c *Client, resource, id string, payload any) error {
 
 	r := fmt.Sprintf("sobjects/%s/%s", resource, id)
 	h := map[string]string{"Content-Type": "application/json"}
-	body, err := c.doRequest("PATCH", r, string(serializedPayload), nil, h)
+	_, err = c.doRequest("PATCH", r, string(serializedPayload), nil, h)
 	if err != nil {
 		return fmt.Errorf("error sending request to update record: %s", err)
-	}
-
-	var unserializedBody string
-	err = json.Unmarshal(body, &unserializedBody)
-	if err != nil {
-		return fmt.Errorf("unexpected error parsing response body: %s", err)
 	}
 
 	return nil
