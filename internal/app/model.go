@@ -31,17 +31,6 @@ var baseStyle = lipgloss.NewStyle().
 
 var focusedStyle = baseStyle.BorderForeground(lipgloss.Color("255"))
 
-var headerStyle = lipgloss.NewStyle().
-	BorderStyle(lipgloss.NormalBorder()).
-	BorderForeground(lipgloss.Color("240")).
-	BorderBottom(true).
-	Bold(false)
-
-var selectedStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.Color("229")).
-	Background(lipgloss.Color("57")).
-	Bold(false)
-
 type TraceFlagNotFoundError struct {
 	s string
 }
@@ -49,6 +38,8 @@ type TraceFlagNotFoundError struct {
 func (t *TraceFlagNotFoundError) Error() string {
 	return t.s
 }
+
+type startFetchingLogsMsg struct{}
 
 type selectApexLogMsg struct {
 	id string
@@ -72,17 +63,13 @@ type model struct {
 	salesforceClient *sf.Client
 	viewport         viewport.Model
 	table            apptable.Model
-	ready            bool
+	viewportReady    bool
 	quitting         bool
 	height           int
 }
 
 func newModel() model {
 	t := apptable.New(table.WithColumns(columns), table.WithFocused(true), table.WithHeight(10))
-	s := table.DefaultStyles()
-	s.Header = headerStyle.Inherit(s.Header)
-	s.Selected = selectedStyle.Inherit(s.Selected)
-	t.SetStyles(s)
 	t.Focus()
 
 	keys.showTable = true
@@ -92,33 +79,16 @@ func newModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return func() tea.Msg {
-		userInfo, err := sf.GetDefaultUserInfo()
-		if err != nil {
-			log.Fatalf("error getting default dx user: %s", err)
-		}
-		orgInfo := sf.ScratchOrgInfo{
-			AccessToken: userInfo.AccessToken,
-			InstanceUrl: userInfo.InstanceUrl,
-			ApiVersion:  "61.0",
-			Alias:       userInfo.Alias,
-		}
-
-		client := sf.NewClient(orgInfo)
-		debugLevelId := initSalesforceDebugLog(client)
-		initSalesforceTraceFlag(client, userInfo.Id, debugLevelId)
-
-		apexLogsQuery := sf.SelectApexLogs()
-		apexLogs, err := sf.DoQuery[sf.ApexLog](client, apexLogsQuery)
-		if err != nil {
-			log.Fatalf("error getting apex logs: %s", err)
-		}
-
-		return apexLogsMsg{logs: apexLogs.Records, salesforceClient: client}
+	startSpinners := func() tea.Msg {
+		return startFetchingLogsMsg{}
 	}
+	return tea.Sequence(startSpinners, initApexLogs)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -136,15 +106,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.help.ShowAll = !m.help.ShowAll
 			return m, nil
 		}
+	case startFetchingLogsMsg:
+		cmd = m.table.StartSpinner()
+		m.viewport.SetContent("")
+		return m, cmd
 	case apexLogsMsg:
+		m.table.StopSpinner()
 		m.table.SetRows(marshalLogs(msg.logs))
 		m.salesforceClient = msg.salesforceClient
 		return m, nil
 	case selectApexLogMsg:
+		cmd = m.viewport.StartSpinner()
+		cmds = append(cmds, cmd)
 		m.selectedLogId = msg.id
-		return m, m.fetchApexLog
+		cmds = append(cmds, m.fetchApexLog)
+		return m, tea.Sequence(cmds...)
 	case apexLogBodyMsg:
 		m.switchFocus()
+		m.viewport.StopSpinner()
 		m.viewport.SetContent(msg.body)
 		return m, nil
 	case tea.WindowSizeMsg:
@@ -154,7 +133,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height - 10
 		m.help.Width = msg.Width
 
-		if !m.ready {
+		if !m.viewportReady {
 			m.viewport = viewport.New(msg.Width-10, msg.Height-10)
 			m.viewport.HighPerformanceRendering = false
 			m.viewport.SetContent(m.logBody)
@@ -163,19 +142,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.Height = msg.Height
 		}
 
-		m.ready = true
+		m.viewportReady = true
 		return m, nil
 	}
 
-	var cmds []tea.Cmd
-	var cmd tea.Cmd
-	m.table.Table, cmd = m.table.Update(msg)
+	m.table, cmd = m.table.Update(msg)
 	cmds = append(cmds, cmd)
-
-	if !m.table.Focused() {
-		m.viewport.Viewport, cmd = m.viewport.Update(msg)
-		cmds = append(cmds, cmd)
-	}
+	m.viewport, cmd = m.viewport.Update(msg)
+	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }
@@ -202,12 +176,12 @@ func (m *model) switchFocus() {
 		m.table.Blur()
 		m.keys.showTable = false
 		m.keys.showViewport = true
-		// m.viewport.Focus()
+		m.viewport.Focus()
 	} else {
 		m.table.Focus()
 		m.keys.showTable = true
 		m.keys.showViewport = false
-		// m.viewport.Blur()
+		m.viewport.Blur()
 	}
 }
 
@@ -215,7 +189,7 @@ func (m model) updateChildModels(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	m.viewport.Viewport, cmd = m.viewport.Update(msg)
+	m.viewport, cmd = m.viewport.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
@@ -231,6 +205,31 @@ func (m model) fetchApexLog() tea.Msg {
 
 func (m model) selectApexLog() tea.Msg {
 	return selectApexLogMsg{id: m.table.SelectedRow()[3]}
+}
+
+func initApexLogs() tea.Msg {
+	userInfo, err := sf.GetDefaultUserInfo()
+	if err != nil {
+		log.Fatalf("error getting default dx user: %s", err)
+	}
+	orgInfo := sf.ScratchOrgInfo{
+		AccessToken: userInfo.AccessToken,
+		InstanceUrl: userInfo.InstanceUrl,
+		ApiVersion:  "61.0",
+		Alias:       userInfo.Alias,
+	}
+
+	client := sf.NewClient(orgInfo)
+	debugLevelId := initSalesforceDebugLog(client)
+	initSalesforceTraceFlag(client, userInfo.Id, debugLevelId)
+
+	apexLogsQuery := sf.SelectApexLogs()
+	apexLogs, err := sf.DoQuery[sf.ApexLog](client, apexLogsQuery)
+	if err != nil {
+		log.Fatalf("error getting apex logs: %s", err)
+	}
+
+	return apexLogsMsg{logs: apexLogs.Records, salesforceClient: client}
 }
 
 func initSalesforceDebugLog(client *sf.Client) string {
