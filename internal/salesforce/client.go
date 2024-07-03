@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -58,7 +57,6 @@ func (c *Client) doRequest(method, resource, body string, queryParams map[string
 	}
 
 	path := fmt.Sprintf("/services/data/v%s/tooling/%s", c.apiVersion, resource)
-	log.Printf("requested path %s", path)
 	u.Path = path
 
 	q := u.Query()
@@ -91,7 +89,6 @@ func (c *Client) doRequest(method, resource, body string, queryParams map[string
 	}
 
 	if res.StatusCode > 399 {
-		log.Printf("response body: %s", string(body))
 		return resBody, fmt.Errorf("request returned error code: %s", res.Status)
 	}
 
@@ -116,9 +113,6 @@ func (c *Client) doQuery(query string, v any) error {
 
 	return nil
 }
-
-// TODO: Continue here!
-//       Trace flag needs to be kept alive every... 30 minutes?
 
 func DoQuery[T any](c *Client, query string) (QueryResponse[T], error) {
 	resource := "query"
