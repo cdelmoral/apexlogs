@@ -26,10 +26,9 @@ var columns = []table.Column{
 
 var baseStyle = lipgloss.NewStyle().
 	BorderStyle(lipgloss.NormalBorder()).
-	BorderForeground(lipgloss.Color("240")).
-	MarginRight(2)
+	BorderForeground(lipgloss.Color("7"))
 
-var focusedStyle = baseStyle.BorderForeground(lipgloss.Color("255"))
+var focusedStyle = baseStyle.BorderForeground(lipgloss.Color("12"))
 
 type TraceFlagNotFoundError struct {
 	s string
@@ -65,7 +64,7 @@ type model struct {
 	table            apptable.Model
 	viewportReady    bool
 	quitting         bool
-	height           int
+	ht, wl, wr       int
 }
 
 func newModel() model {
@@ -127,22 +126,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetContent(msg.body)
 		return m, nil
 	case tea.WindowSizeMsg:
-		// TODO: Figure out how to substract border dynamically
-		// I think I have to use a function called GetFrameSize
-		// _, v := baseStyle.GetFrameSize()
-		m.height = msg.Height - 10
-		m.help.Width = msg.Width
-
-		if !m.viewportReady {
-			m.viewport = viewport.New(msg.Width-10, msg.Height-10)
-			m.viewport.HighPerformanceRendering = false
-			m.viewport.SetContent(m.logBody)
-		} else {
-			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height
-		}
-
-		m.viewportReady = true
+		m.resize(msg.Width, msg.Height)
 		return m, nil
 	}
 
@@ -161,9 +145,17 @@ func (m model) View() string {
 
 	var v string
 	if m.table.Focused() {
-		v = lipgloss.JoinHorizontal(lipgloss.Top, focusedStyle.Height(m.height-10).Render(m.table.View()), m.viewport.View())
+		v = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			focusedStyle.MaxWidth(m.wl).Render(m.table.View()),
+			baseStyle.MaxWidth(m.wr).Render(m.viewport.View()),
+		)
 	} else {
-		v = lipgloss.JoinHorizontal(lipgloss.Top, baseStyle.Height(m.height-10).Render(m.table.View()), m.viewport.View())
+		v = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			baseStyle.MaxWidth(m.wl).Render(m.table.View()),
+			focusedStyle.MaxWidth(m.wr).Render(m.viewport.View()),
+		)
 	}
 
 	helpView := m.help.View(m.keys)
@@ -183,6 +175,28 @@ func (m *model) switchFocus() {
 		m.keys.showViewport = false
 		m.viewport.Blur()
 	}
+}
+
+func (m *model) resize(w, h int) {
+	m.help.Width = w
+
+	m.ht = h - 3
+	m.wl = percentInt(w, 20)
+	m.wr = percentInt(w, 80)
+
+	m.table.SetWidth(m.wl - 2)
+	m.table.SetHeight(m.ht)
+
+	if !m.viewportReady {
+		m.viewport = viewport.New(m.wr-2, m.ht)
+		m.viewport.HighPerformanceRendering = false
+		m.viewport.SetContent(m.logBody)
+	} else {
+		m.viewport.Width = m.wr - 2
+		m.viewport.Height = m.ht
+	}
+
+	m.viewportReady = true
 }
 
 func (m model) updateChildModels(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -316,4 +330,8 @@ func marshalLogs(logs []sf.ApexLog) []table.Row {
 		rows = append(rows, table.Row{log.Operation, log.Status, log.StartTime, log.ID})
 	}
 	return rows
+}
+
+func percentInt(a, b int) int {
+	return int(float64(a) * (float64(b) / 100))
 }

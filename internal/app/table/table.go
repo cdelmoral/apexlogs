@@ -31,6 +31,7 @@ type Model struct {
 	cols    []table.Column
 	spinner spinner.Model
 	Table
+	height      int
 	showSpinner bool
 }
 
@@ -40,6 +41,7 @@ func New(opts ...table.Option) Model {
 	s.Header = headerStyle.Inherit(s.Header)
 	s.Selected = selectedStyle.Inherit(s.Selected)
 	t.SetStyles(s)
+
 	return Model{
 		Table: t,
 	}
@@ -61,23 +63,42 @@ func (a Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 func (a Model) View() string {
 	if a.showSpinner {
 		s := fmt.Sprintf("%s %s", a.spinner.View(), loadingMsg)
+		s = lipgloss.NewStyle().Height(a.height - 5).Render(s)
 		return lipgloss.JoinVertical(lipgloss.Center, a.Table.View(), s)
 	}
 
 	if len(a.Rows()) == 0 {
-		return lipgloss.JoinVertical(lipgloss.Center, a.Table.View(), emptyMsg)
+		msg := lipgloss.NewStyle().Height(a.height - 5).Render(emptyMsg)
+		return lipgloss.JoinVertical(lipgloss.Center, a.Table.View(), msg)
 	}
 
 	return a.Table.View()
 }
 
 func (a *Model) StartSpinner() tea.Cmd {
+	a.Table.SetHeight(5)
 	a.showSpinner = true
 	a.spinner = spinner.New()
 	return a.spinner.Tick
 }
 
 func (a *Model) StopSpinner() {
+	a.Table.SetHeight(a.height)
 	a.showSpinner = false
 	a.spinner = spinner.New()
+}
+
+func (a *Model) SetRows(rows []table.Row) {
+	if len(rows) == 0 {
+		a.Table.SetHeight(5)
+	} else {
+		a.Table.SetHeight(a.height)
+	}
+
+	a.Table.SetRows(rows)
+}
+
+func (a *Model) SetHeight(h int) {
+	// Substract the header row and underline
+	a.height = h - 2
 }
