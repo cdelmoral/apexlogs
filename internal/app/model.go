@@ -18,10 +18,10 @@ import (
 const defaultDebugLevelName = "SFDC_DevConsole"
 
 var columns = []table.Column{
-	{Title: "Operation", Width: 10},
-	{Title: "Status", Width: 10},
-	{Title: "Start time", Width: 20},
-	{Title: "Id", Width: 18},
+	{Title: "Operation", Width: 5},
+	{Title: "Status", Width: 5},
+	{Title: "Start time", Width: 5},
+	{Title: "Id", Width: 5},
 }
 
 var baseStyle = lipgloss.NewStyle().
@@ -104,6 +104,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.help):
 			m.help.ShowAll = !m.help.ShowAll
 			return m, nil
+		case key.Matches(msg, m.keys.refresh):
+			if m.table.Focused() {
+				m.table.SetRows([]table.Row{})
+				cmds = append(cmds, m.table.StartSpinner())
+				cmds = append(cmds, refreshApexLogsCmd(m.salesforceClient))
+				return m, tea.Sequence(cmds...)
+			}
 		}
 	case startFetchingLogsMsg:
 		cmd = m.table.StartSpinner()
@@ -221,6 +228,22 @@ func (m model) selectApexLog() tea.Msg {
 	return selectApexLogMsg{id: m.table.SelectedRow()[3]}
 }
 
+func refreshApexLogs(client *sf.Client) tea.Msg {
+	apexLogsQuery := sf.SelectApexLogs()
+	apexLogs, err := sf.DoQuery[sf.ApexLog](client, apexLogsQuery)
+	if err != nil {
+		log.Fatalf("error getting apex logs: %s", err)
+	}
+
+	return apexLogsMsg{logs: apexLogs.Records, salesforceClient: client}
+}
+
+func refreshApexLogsCmd(client *sf.Client) tea.Cmd {
+	return func() tea.Msg {
+		return refreshApexLogs(client)
+	}
+}
+
 func initApexLogs() tea.Msg {
 	userInfo, err := sf.GetDefaultUserInfo()
 	if err != nil {
@@ -237,13 +260,7 @@ func initApexLogs() tea.Msg {
 	debugLevelId := initSalesforceDebugLog(client)
 	initSalesforceTraceFlag(client, userInfo.Id, debugLevelId)
 
-	apexLogsQuery := sf.SelectApexLogs()
-	apexLogs, err := sf.DoQuery[sf.ApexLog](client, apexLogsQuery)
-	if err != nil {
-		log.Fatalf("error getting apex logs: %s", err)
-	}
-
-	return apexLogsMsg{logs: apexLogs.Records, salesforceClient: client}
+	return refreshApexLogs(client)
 }
 
 func initSalesforceDebugLog(client *sf.Client) string {
