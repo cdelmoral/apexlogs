@@ -15,12 +15,15 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-const defaultDebugLevelName = "SFDC_DevConsole"
+const (
+	defaultDebugLevelName = "SFDC_DevConsole"
+	datetimeLayout        = "02 Jan 15:04"
+)
 
 var columns = []table.Column{
-	{Title: "Operation", Width: 5},
-	{Title: "Status", Width: 5},
-	{Title: "Start time", Width: 5},
+	{Title: "Start time", Width: 12},
+	{Title: "Operation", Width: 10},
+	{Title: "Status", Width: 8},
 	{Title: "Id", Width: 5},
 }
 
@@ -344,7 +347,20 @@ func initSalesforceTraceFlag(client *sf.Client, userId, debugLevelId string) {
 func marshalLogs(logs []sf.ApexLog) []table.Row {
 	rows := []table.Row{}
 	for _, log := range logs {
-		rows = append(rows, table.Row{log.Operation, log.Status, log.StartTime, log.ID})
+		st, err := time.Parse(sf.DateTimeLayout, log.StartTime)
+		if err != nil {
+			st = time.Now()
+		}
+
+		rows = append(
+			rows,
+			table.Row{
+				st.Format(datetimeLayout),
+				log.Operation,
+				log.Status,
+				log.ID,
+			},
+		)
 	}
 	return rows
 }
