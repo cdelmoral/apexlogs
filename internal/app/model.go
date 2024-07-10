@@ -20,19 +20,6 @@ const (
 	datetimeLayout        = "02 Jan 15:04"
 )
 
-var columns = []table.Column{
-	{Title: "Start time", Width: 12},
-	{Title: "Operation", Width: 10},
-	{Title: "Status", Width: 8},
-	{Title: "Id", Width: 5},
-}
-
-var baseStyle = lipgloss.NewStyle().
-	BorderStyle(lipgloss.NormalBorder()).
-	BorderForeground(lipgloss.Color("7"))
-
-var focusedStyle = baseStyle.BorderForeground(lipgloss.Color("12"))
-
 type TraceFlagNotFoundError struct {
 	s string
 }
@@ -58,26 +45,38 @@ type apexLogBodyMsg struct {
 }
 
 type model struct {
-	keys             keyMap
 	help             help.Model
-	selectedLogId    string
-	logBody          string
 	salesforceClient *sf.Client
+	logBody          string
+	selectedLogId    string
+	keys             keyMap
 	viewport         viewport.Model
 	table            apptable.Model
+	terminalHeight   int
+	terminalWidth    int
 	viewportReady    bool
 	quitting         bool
-	ht, wl, wr       int
 }
 
 func newModel() model {
+	columns := []table.Column{
+		{Title: "Start time", Width: 12},
+		{Title: "Operation", Width: 10},
+		{Title: "Status", Width: 8},
+		{Title: "Id", Width: 5},
+	}
+
 	t := apptable.New(table.WithColumns(columns), table.WithFocused(true), table.WithHeight(10))
 	t.Focus()
 
 	keys.showTable = true
 	keys.showViewport = false
 
-	return model{table: t, keys: keys, help: help.New()}
+	return model{
+		table: t,
+		keys:  keys,
+		help:  help.New(),
+	}
 }
 
 func (m model) Init() tea.Cmd {
@@ -99,6 +98,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.tab):
 			m.switchFocus()
+			m.resize()
 			return m, nil
 		case key.Matches(msg, m.keys.enter):
 			if m.table.Focused() {
@@ -106,6 +106,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case key.Matches(msg, m.keys.help):
 			m.help.ShowAll = !m.help.ShowAll
+			m.resize()
 			return m, nil
 		case key.Matches(msg, m.keys.refresh):
 			if m.table.Focused() {
@@ -136,7 +137,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetContent(msg.body)
 		return m, nil
 	case tea.WindowSizeMsg:
-		m.resize(msg.Width, msg.Height)
+		m.terminalWidth = msg.Width
+		m.terminalHeight = msg.Height
+		m.resize()
 		return m, nil
 	}
 
@@ -153,22 +156,12 @@ func (m model) View() string {
 		return ""
 	}
 
-	var v string
-	if m.table.Focused() {
-		v = lipgloss.JoinHorizontal(
-			lipgloss.Top,
-			focusedStyle.MaxWidth(m.wl).Render(m.table.View()),
-			baseStyle.MaxWidth(m.wr).Render(m.viewport.View()),
-		)
-	} else {
-		v = lipgloss.JoinHorizontal(
-			lipgloss.Top,
-			baseStyle.MaxWidth(m.wl).Render(m.table.View()),
-			focusedStyle.MaxWidth(m.wr).Render(m.viewport.View()),
-		)
-	}
-
-	helpView := m.help.View(m.keys)
+	v := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		m.table.View(),
+		m.viewport.View(),
+	)
+	helpView := lipgloss.NewStyle().MarginTop(0).Render(m.help.View(m.keys))
 
 	return lipgloss.JoinVertical(lipgloss.Left, v, helpView)
 }
@@ -187,26 +180,27 @@ func (m *model) switchFocus() {
 	}
 }
 
-func (m *model) resize(w, h int) {
-	m.help.Width = w
+func (m *model) resize() {
+	helpView := m.help.View(m.keys)
+	helpViewHeight := lipgloss.Height(helpView)
 
-	m.ht = h - 3
-	m.wl = percentInt(w, 20)
-	m.wr = percentInt(w, 80)
+	m.help.Width = m.terminalWidth
 
-	m.table.SetWidth(m.wl - 2)
-	m.table.SetHeight(m.ht)
+	ht := m.terminalHeight - helpViewHeight
+	wl := percentInt(m.terminalWidth, 40)
+	wr := percentInt(m.terminalWidth, 60)
+
+	m.table.SetWidth(wl)
+	m.table.SetHeight(ht)
 
 	if !m.viewportReady {
-		m.viewport = viewport.New(m.wr-2, m.ht)
+		m.viewport = viewport.New(wr, ht)
 		m.viewport.HighPerformanceRendering = false
 		m.viewport.SetContent(m.logBody)
-	} else {
-		m.viewport.Width = m.wr - 2
-		m.viewport.Height = m.ht
 	}
-
 	m.viewportReady = true
+	m.viewport.SetWidth(wr)
+	m.viewport.SetHeight(ht)
 }
 
 func (m model) updateChildModels(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -307,7 +301,10 @@ func refreshSalesforceTraceFlag(client *sf.Client, userId string) error {
 	}
 
 	if expirationDate.Unix() < time.Now().Add(time.Minute*10).UTC().Unix() {
-		patchPayload := map[string]string{"ExpirationDate": time.Now().Add(time.Minute * 30).UTC().Format(sf.DateTimeLayout)}
+		patchPayload := map[string]string{
+			"ExpirationDate": time.Now().Add(time.Minute * 30).UTC().Format(sf.DateTimeLayout),
+			"StartDate":      time.Now().UTC().Format(sf.DateTimeLayout),
+		}
 		err := sf.PatchSObject(client, "TraceFlag", traceFlag.Id, patchPayload)
 		if err != nil {
 			return fmt.Errorf("error sending request to update trace flag with id %s: %s", traceFlag.Id, err)
@@ -327,6 +324,7 @@ func initSalesforceTraceFlag(client *sf.Client, userId, debugLevelId string) {
 			"TracedEntityId": userId,
 			"DebugLevelId":   debugLevelId,
 			"LogType":        "DEVELOPER_LOG",
+			"StartDate":      time.Now().UTC().Format(sf.DateTimeLayout),
 			"ExpirationDate": time.Now().Add(time.Minute * 30).UTC().Format(sf.DateTimeLayout),
 		}
 		postResult, err := sf.PostSObject(client, "TraceFlag", traceFlag)

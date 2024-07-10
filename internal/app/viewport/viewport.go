@@ -10,13 +10,16 @@ import (
 )
 
 const (
-	emptyMsg   = "Select an apex log to see the content"
-	loadingMsg = "Loading selected apex log..."
+	emptyMsg     = "Select an apex log to see the content"
+	loadingMsg   = "Loading selected apex log..."
+	focusedColor = lipgloss.Color("12")
+	baseColor    = lipgloss.Color("7")
 )
 
 type Viewport = viewport.Model
 
 type Model struct {
+	viewportStyle lipgloss.Style
 	Viewport
 	spinner     spinner.Model
 	isFocused   bool
@@ -25,9 +28,15 @@ type Model struct {
 }
 
 func New(width, height int) Model {
-	return Model{
+	m := Model{
 		Viewport: viewport.New(width, height),
+		viewportStyle: lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(baseColor),
 	}
+	m.SetWidth(width)
+	m.SetHeight(height)
+	return m
 }
 
 func (a Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -50,7 +59,7 @@ func (a Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (a Model) View() string {
 	if !a.isEmpty && !a.showSpinner {
-		return a.Viewport.View()
+		return a.viewportStyle.Render(a.Viewport.View())
 	}
 
 	w, h := a.Width, a.Height
@@ -68,10 +77,10 @@ func (a Model) View() string {
 
 	if a.showSpinner {
 		s := fmt.Sprintf("%s %s", a.spinner.View(), loadingMsg)
-		return style.Render(s)
+		return a.viewportStyle.Render(style.Render(s))
 	}
 
-	return style.Render(emptyMsg)
+	return a.viewportStyle.Render(style.Render(emptyMsg))
 }
 
 func (a *Model) SetContent(s string) {
@@ -92,8 +101,20 @@ func (a *Model) StopSpinner() {
 
 func (a *Model) Focus() {
 	a.isFocused = true
+	a.viewportStyle = a.viewportStyle.BorderForeground(focusedColor)
 }
 
 func (a *Model) Blur() {
 	a.isFocused = false
+	a.viewportStyle = a.viewportStyle.BorderForeground(baseColor)
+}
+
+func (m *Model) SetWidth(w int) {
+	m.Width = w - 2
+	m.viewportStyle = m.viewportStyle.Width(w - 2).MaxWidth(w)
+}
+
+func (m *Model) SetHeight(h int) {
+	m.Height = h - 3
+	m.viewportStyle = m.viewportStyle.Height(h - 3).MaxHeight(h)
 }
