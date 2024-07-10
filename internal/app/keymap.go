@@ -63,7 +63,7 @@ var keys = keyMap{
 	),
 	refresh: key.NewBinding(
 		key.WithKeys("r"),
-		key.WithHelp("refresh", "refresh apex logs"),
+		key.WithHelp("r", "refresh apex logs"),
 	),
 	tab: key.NewBinding(
 		key.WithKeys("tab"),

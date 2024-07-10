@@ -10,8 +10,10 @@ import (
 )
 
 const (
-	emptyMsg   = "No logs found to display"
-	loadingMsg = "Loading apex logs..."
+	emptyMsg     = "No logs found to display"
+	loadingMsg   = "Loading apex logs..."
+	focusedColor = lipgloss.Color("12")
+	baseColor    = lipgloss.Color("7")
 )
 
 var headerStyle = lipgloss.NewStyle().
@@ -28,10 +30,12 @@ var selectedStyle = lipgloss.NewStyle().
 type Table = table.Model
 
 type Model struct {
+	style   lipgloss.Style
 	cols    []table.Column
 	spinner spinner.Model
 	Table
 	height      int
+	width       int
 	showSpinner bool
 }
 
@@ -44,6 +48,10 @@ func New(opts ...table.Option) Model {
 
 	return Model{
 		Table: t,
+		style: lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(focusedColor).
+			MarginRight(1),
 	}
 }
 
@@ -61,18 +69,18 @@ func (a Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (a Model) View() string {
+	var v string
+
 	if a.showSpinner {
 		s := fmt.Sprintf("%s %s", a.spinner.View(), loadingMsg)
-		s = lipgloss.NewStyle().Height(a.height - 5).Render(s)
-		return lipgloss.JoinVertical(lipgloss.Center, a.Table.View(), s)
+		v = lipgloss.JoinVertical(lipgloss.Left, a.Table.View(), s)
+	} else if len(a.Rows()) == 0 {
+		v = lipgloss.JoinVertical(lipgloss.Left, a.Table.View(), emptyMsg)
+	} else {
+		v = a.Table.View()
 	}
 
-	if len(a.Rows()) == 0 {
-		msg := lipgloss.NewStyle().Height(a.height - 5).Render(emptyMsg)
-		return lipgloss.JoinVertical(lipgloss.Center, a.Table.View(), msg)
-	}
-
-	return a.Table.View()
+	return a.style.Render(v)
 }
 
 func (a *Model) StartSpinner() tea.Cmd {
@@ -83,7 +91,7 @@ func (a *Model) StartSpinner() tea.Cmd {
 }
 
 func (a *Model) StopSpinner() {
-	a.Table.SetHeight(a.height)
+	a.SetHeight(a.height)
 	a.showSpinner = false
 	a.spinner = spinner.New()
 }
@@ -92,13 +100,30 @@ func (a *Model) SetRows(rows []table.Row) {
 	if len(rows) == 0 {
 		a.Table.SetHeight(5)
 	} else {
-		a.Table.SetHeight(a.height)
+		a.SetHeight(a.height)
 	}
 
 	a.Table.SetRows(rows)
 }
 
-func (a *Model) SetHeight(h int) {
-	// Substract the header row and underline
-	a.height = h - 2
+func (m *Model) SetHeight(h int) {
+	m.height = h
+	m.Table.SetHeight(h - 5)
+	m.style = m.style.Height(h - 3).MaxHeight(h)
+}
+
+func (a *Model) SetWidth(w int) {
+	a.width = w
+	a.Table.SetWidth(w - 3)
+	a.style = a.style.Width(w - 3).MaxWidth(w)
+}
+
+func (a *Model) Blur() {
+	a.style = a.style.BorderForeground(baseColor)
+	a.Table.Blur()
+}
+
+func (a *Model) Focus() {
+	a.style = a.style.BorderForeground(focusedColor)
+	a.Table.Focus()
 }
