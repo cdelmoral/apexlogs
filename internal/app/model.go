@@ -17,7 +17,6 @@ import (
 
 const (
 	defaultDebugLevelName = "SFDC_DevConsole"
-	datetimeLayout        = "02 Jan 15:04"
 )
 
 type TraceFlagNotFoundError struct {
@@ -59,14 +58,7 @@ type model struct {
 }
 
 func newModel() model {
-	columns := []table.Column{
-		{Title: "Start time", Width: 12},
-		{Title: "Operation", Width: 10},
-		{Title: "Status", Width: 8},
-		{Title: "Id", Width: 5},
-	}
-
-	t := apptable.New(table.WithColumns(columns), table.WithFocused(true), table.WithHeight(10))
+	t := apptable.New(table.WithFocused(true), table.WithHeight(10))
 	t.Focus()
 
 	keys.showTable = true
@@ -110,7 +102,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case key.Matches(msg, m.keys.refresh):
 			if m.table.Focused() {
-				m.table.SetRows([]table.Row{})
+				m.table.SetLogs([]sf.ApexLog{})
 				cmds = append(cmds, m.table.StartSpinner())
 				cmds = append(cmds, refreshApexLogsCmd(m.salesforceClient))
 				return m, tea.Sequence(cmds...)
@@ -122,7 +114,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case apexLogsMsg:
 		m.table.StopSpinner()
-		m.table.SetRows(marshalLogs(msg.logs))
+		m.table.SetLogs(msg.logs)
 		m.salesforceClient = msg.salesforceClient
 		return m, nil
 	case selectApexLogMsg:
@@ -222,7 +214,7 @@ func (m model) fetchApexLog() tea.Msg {
 }
 
 func (m model) selectApexLog() tea.Msg {
-	return selectApexLogMsg{id: m.table.SelectedRow()[3]}
+	return selectApexLogMsg{id: m.table.SelectedLogId()}
 }
 
 func refreshApexLogs(client *sf.Client) tea.Msg {
@@ -340,27 +332,6 @@ func initSalesforceTraceFlag(client *sf.Client, userId, debugLevelId string) {
 	} else if err != nil {
 		log.Fatalf("error refreshing trace flag: %s", err)
 	}
-}
-
-func marshalLogs(logs []sf.ApexLog) []table.Row {
-	rows := []table.Row{}
-	for _, log := range logs {
-		st, err := time.Parse(sf.DateTimeLayout, log.StartTime)
-		if err != nil {
-			st = time.Now()
-		}
-
-		rows = append(
-			rows,
-			table.Row{
-				st.Format(datetimeLayout),
-				log.Operation,
-				log.Status,
-				log.ID,
-			},
-		)
-	}
-	return rows
 }
 
 func percentInt(a, b int) int {
