@@ -1,9 +1,9 @@
 package app
 
 import (
+	"github.com/cdelmoral/apexlogs/internal/app/viewport"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
-	"github.com/charmbracelet/bubbles/viewport"
 )
 
 type keyMap struct {
@@ -12,6 +12,7 @@ type keyMap struct {
 	tab          key.Binding
 	help         key.Binding
 	refresh      key.Binding
+	filter       key.Binding
 	showTable    bool
 	showViewport bool
 }
@@ -22,8 +23,8 @@ func (k keyMap) ShortHelp() []key.Binding {
 
 func (k keyMap) FullHelp() [][]key.Binding {
 	var ks [][]key.Binding
-	tk := table.DefaultKeyMap()
 	if k.showTable {
+		tk := table.DefaultKeyMap()
 		ks = append(ks, []key.Binding{
 			k.enter,
 			k.refresh,
@@ -40,6 +41,9 @@ func (k keyMap) FullHelp() [][]key.Binding {
 	if k.showViewport {
 		vk := viewport.DefaultKeyMap()
 		ks = append(ks, []key.Binding{
+			vk.Slash,
+			vk.Enter,
+			vk.Esc,
 			vk.PageDown,
 			vk.PageUp,
 			vk.HalfPageUp,
@@ -59,7 +63,7 @@ var keys = keyMap{
 	),
 	enter: key.NewBinding(
 		key.WithKeys("enter"),
-		key.WithHelp("enter", "open selected log"),
+		key.WithHelp("enter", "open selected apex log"),
 	),
 	refresh: key.NewBinding(
 		key.WithKeys("r"),
