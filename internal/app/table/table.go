@@ -48,6 +48,7 @@ func New(opts ...table.Option) Model {
 		{Title: "Start time", Width: 12},
 		{Title: "Operation", Width: 10},
 		{Title: "Status", Width: 10},
+		{Title: "Log Size", Width: 8},
 	}
 
 	opts = append(opts, table.WithColumns(columns))
@@ -165,9 +166,19 @@ func marshalLogs(logs []sf.ApexLog) ([]string, []table.Row) {
 				st.Format(datetimeLayout),
 				log.Operation,
 				log.Status,
+				printSize(log.LogLength),
 			},
 		)
 		ids = append(ids, log.ID)
 	}
 	return ids, rows
+}
+
+func printSize(size int) string {
+	kb, mb := size/1024, float32(size)/(1024*1024)
+	s := fmt.Sprintf("%d KB", kb)
+	if kb > 999 {
+		s = fmt.Sprintf("%.1f MB", mb)
+	}
+	return s
 }
