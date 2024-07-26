@@ -179,8 +179,8 @@ func (m *model) resize() {
 	m.help.Width = m.terminalWidth
 
 	ht := m.terminalHeight - helpViewHeight
-	wl := percentInt(m.terminalWidth, 40)
-	wr := percentInt(m.terminalWidth, 60)
+	wl := 51
+	wr := m.terminalWidth - wl
 
 	m.table.SetWidth(wl)
 	m.table.SetHeight(ht)
