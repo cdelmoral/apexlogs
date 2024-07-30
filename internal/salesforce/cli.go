@@ -6,6 +6,7 @@ import (
 	"os/exec"
 )
 
+// A ScratchOrgInfo contains the necessary information to connect to a Salesforce org.
 type ScratchOrgInfo struct {
 	AccessToken string
 	InstanceUrl string
@@ -13,6 +14,7 @@ type ScratchOrgInfo struct {
 	Alias       string
 }
 
+// UserInfo contains the Salesforce user information.
 type UserInfo struct {
 	AccessToken string
 	Id          string
@@ -24,12 +26,14 @@ type UserInfo struct {
 	Alias       string
 }
 
+// A CommandResponse represents the result of an Salesforce CLI command.
 type CommandResponse[T any] struct {
 	Result   T
 	Warnings []string
 	Status   int
 }
 
+// GetDefaultUserInfo returns the Salesforce CLI default user.
 func GetDefaultUserInfo() (UserInfo, error) {
 	cmd := exec.Command("sf", "org", "display", "user", "--json")
 	out, err := cmd.Output()
@@ -46,7 +50,8 @@ func GetDefaultUserInfo() (UserInfo, error) {
 	return userInfoResponse.Result, nil
 }
 
-func GetDefaultScratchOrgAccessToken() (ScratchOrgInfo, error) {
+// GetDefaultScratchOrgInfo returns the Salesforce CLI default scratch org.
+func GetDefaultScratchOrgInfo() (ScratchOrgInfo, error) {
 	var info ScratchOrgInfo
 
 	cmd := exec.Command("sf", "org", "display", "--json")

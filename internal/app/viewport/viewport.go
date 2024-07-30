@@ -21,6 +21,13 @@ const (
 
 type Viewport = viewport.Model
 
+// Model wraps the [viewport.Model] type.
+//
+// It adds the following functionality:
+//   - A text input for filtering the content
+//   - Focus/blur functionality
+//   - Loading spinner
+//   - Empty state message
 type Model struct {
 	viewportStyle  lipgloss.Style
 	textInputStyle lipgloss.Style
@@ -35,6 +42,7 @@ type Model struct {
 	containerHeight int
 }
 
+// New creates a new [Model] with the given width and height.
 func New(width, height int) Model {
 	m := Model{
 		Viewport: viewport.New(width, height),
