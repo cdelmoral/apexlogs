@@ -32,6 +32,11 @@ var selectedStyle = lipgloss.NewStyle().
 
 type Table = table.Model
 
+// Model wraps the [table.Model] type.
+//
+// It adds the following functionality:
+//   - Loading spinner
+//   - Empty state message
 type Model struct {
 	style   lipgloss.Style
 	cols    []table.Column
@@ -43,6 +48,8 @@ type Model struct {
 	showSpinner bool
 }
 
+// New creates a new [Model].
+// It receives a list of [table.Option].
 func New(opts ...table.Option) Model {
 	columns := []table.Column{
 		{Title: "Start time", Width: 12},

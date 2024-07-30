@@ -53,6 +53,7 @@ AND LogType = 'DEVELOPER_LOG'
 LIMIT 1
 `
 
+// ApexLog represents an Apex Log record.
 type ApexLog struct {
 	Attributes           Attributes
 	ID                   string
@@ -68,6 +69,7 @@ type ApexLog struct {
 	LogLength            int
 }
 
+// A DebugLevel represnets a Debug Level record.
 type DebugLevel struct {
 	Id            string
 	ApexCode      string
@@ -83,6 +85,7 @@ type DebugLevel struct {
 	Workflow      string
 }
 
+// A TraceFlag represents a Trace Flag record.
 type TraceFlag struct {
 	Id             string
 	DebugLevelId   string
@@ -91,14 +94,17 @@ type TraceFlag struct {
 	LogType        string
 }
 
+// SelectApexLogs returns a SOQL query to select the last 100 Apex Logs.
 func SelectApexLogs() string {
 	return apexLogsQuery
 }
 
+// SelectDebugLogByDeveloperName returns a SOQL query to select a Debug Level by Developer Name.
 func SelectDebugLogByDeveloperName(n string) string {
 	return fmt.Sprintf(debugLogsQuery, n)
 }
 
+// SelectDebugLogTraceFlagByTracedId returns a SOQL query to select a Trace Flag by Traced Entity ID.
 func SelectDebugLogTraceFlagByTracedId(i string) string {
 	return fmt.Sprintf(traceFlagQuery, i)
 }

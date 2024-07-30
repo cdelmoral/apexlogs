@@ -19,6 +19,7 @@ const (
 	defaultDebugLevelName = "SFDC_DevConsole"
 )
 
+// A TraceFlagNotFoundError is an error that occurs when a trace flag is not found.
 type TraceFlagNotFoundError struct {
 	s string
 }
@@ -33,7 +34,6 @@ type selectApexLogMsg struct {
 	id string
 }
 
-// TODO: Create init message struct?
 type apexLogsMsg struct {
 	salesforceClient *sf.Client
 	logs             []sf.ApexLog

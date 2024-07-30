@@ -33,6 +33,8 @@ type PostSObjectResponse struct {
 	Success  bool
 }
 
+// A Client is a Salesforce API client.
+// Client stores the access token, instance URL, API version and alias of a Salesforce org.
 type Client struct {
 	accessToken string
 	instanceUrl string
@@ -40,6 +42,9 @@ type Client struct {
 	alias       string
 }
 
+// NewClient creates a new Client.
+// NewClient receives a [ScratchOrgInfo] with the Salesforce org information.
+// It returns a pointer to a new [Client].
 func NewClient(orgInfo ScratchOrgInfo) *Client {
 	return &Client{
 		accessToken: orgInfo.AccessToken,
@@ -49,8 +54,11 @@ func NewClient(orgInfo ScratchOrgInfo) *Client {
 	}
 }
 
-// TODO: Create custom error type with more error details
-func (c *Client) doRequest(method, resource, body string, queryParams map[string]string, headers map[string]string) ([]byte, error) {
+func (c *Client) doRequest(
+	method, resource, body string,
+	queryParams map[string]string,
+	headers map[string]string,
+) ([]byte, error) {
 	u, err := url.Parse(c.instanceUrl)
 	if err != nil {
 		return nil, fmt.Errorf("unexpected error parsing instance url")
@@ -114,6 +122,9 @@ func (c *Client) doQuery(query string, v any) error {
 	return nil
 }
 
+// DoQuery performs a query request to the Salesforce API.
+// The response is typed to the type T, which represents the Salesforce object related to the query.
+// An error is returned if the requests fails or if the response cannot be unmarshalled to type T.
 func DoQuery[T any](c *Client, query string) (QueryResponse[T], error) {
 	resource := "query"
 	q := map[string]string{
@@ -134,6 +145,8 @@ func DoQuery[T any](c *Client, query string) (QueryResponse[T], error) {
 	return res, nil
 }
 
+// PatchSObject performs an update request to the Salesforce API.
+// An error is returned if the payload cannot be serialized or if the request fails.
 func PatchSObject(c *Client, resource, id string, payload any) error {
 	serializedPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -150,6 +163,12 @@ func PatchSObject(c *Client, resource, id string, payload any) error {
 	return nil
 }
 
+// PostSObject permforms a create requests to the Salesforce API.
+// An error is returned in the following cases:
+//   - The payload cannot be serialized
+//   - The request fails
+//   - The response cannot be deserialized
+//   - The response contains an error (the response is also returned in this case)
 func PostSObject(c *Client, resource string, payload any) (PostSObjectResponse, error) {
 	serializedPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -170,12 +189,14 @@ func PostSObject(c *Client, resource string, payload any) (PostSObjectResponse, 
 	}
 
 	if !unserializedBody.Success {
-		return PostSObjectResponse{}, fmt.Errorf("error creating new record: %s", unserializedBody.Errors)
+		return unserializedBody, fmt.Errorf("error creating new record: %s", unserializedBody.Errors)
 	}
 
 	return unserializedBody, nil
 }
 
+// GetSObjectBody performs a request to retrieve the body of an Object of type resource with the given id.
+// An error is returned if the request fails.
 func GetSObjectBody(c *Client, resource, id string) (string, error) {
 	r := fmt.Sprintf("sobjects/%s/%s/Body", resource, id)
 
