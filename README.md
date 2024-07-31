@@ -4,7 +4,7 @@
   <h3 align="center">A simple terminal UI for viewing Salesforce logs</h3>
 </p>
 
-## What is apexlogs
+## What is apexlogs?
 
 Do you find debugging Salesforce Apex code annoying?
 
@@ -13,6 +13,8 @@ your terminal.
 
 It automatically creates the required debug level and trace flag records for you
 and allows you to easily fetch and view logs.
+
+![Demo](images/demo.gif)
 
 ## Installation
 
