@@ -2,6 +2,11 @@
   <img src="images/apexlogs-logo.png" alt="Logo" width="150">
 
   <h3 align="center">A simple terminal UI for viewing Salesforce logs</h3>
+
+  <p align="center">
+    <img src="https://github.com/cdelmoral/apexlogs/actions/workflows/release.yml/badge.svg"/>
+    <img src="https://github.com/cdelmoral/apexlogs/actions/workflows/build.yml/badge.svg?branch=main"/>
+  </p>
 </p>
 
 ## What is apexlogs?
