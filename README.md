@@ -23,7 +23,13 @@ and allows you to easily fetch and view logs.
 
 ## Installation
 
-Download and install go[^2]. Once installed, open a terminal and run:
+The easiest way to install apexlogs is using Homebrew[^2]:
+
+```sh
+brew install cdelmoral/tap/apexlogs
+```
+
+You can also install it using go[^3]:
 
 ```sh
 go install github.com/cdelmoral/apexlogs
@@ -31,7 +37,7 @@ go install github.com/cdelmoral/apexlogs
 
 ## Usage
 
-If you haven't already install the Salesfoce CLI[^3].
+If you haven't already install the Salesfoce CLI[^4].
 
 Open a terminal and navigate to your Salesforce project directory.
 
@@ -41,5 +47,6 @@ If a default scratch org is not set already configure it by running
 Open the application by running `apexlogs` in your terminal.
 
 [^1]: <https://en.wikipedia.org/wiki/Text-based_user_interface>
-[^2]: <https://go.dev/dl/>
-[^3]: <https://developer.salesforce.com/tools/salesforcecli>
+[^2]: <https://brew.sh/>
+[^3]: <https://go.dev/dl/>
+[^4]: <https://developer.salesforce.com/tools/salesforcecli>
